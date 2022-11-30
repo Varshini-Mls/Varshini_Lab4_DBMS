@@ -92,3 +92,62 @@ insert into RATING values(13,113,2);
 insert into RATING values(14,114,1);
 insert into RATING values(15,115,1);
 insert into RATING values(16,116,0);
+
+
+
+use `order-directory`;
+select customer.cus_gender, count(customer.cus_gender) as totalnumberofcustomers
+from customer
+inner join `order`
+on customer.cus_id = `order`.cus_id
+where `order`.ord_amount >=3000
+group by customer.cus_gender;
+
+
+
+select product.prod_name, `order`.* from `order`, supplier_pricing,
+product where `order`.cus_id=2 and 
+`order`.pricing_id = supplier_pricing.pricing_id and supplier_pricing.prod_id = product.prod_id;
+
+
+
+select supplier.* from supplier where supplier.supp_id in
+(select supp_id from supplier_pricing group by supp_id having
+count(supp_id)>1)
+group by supplier.supp_id;
+
+
+
+select category.cat_id, category.cat_name, min(t3.min_price) as Min_price from category inner join
+(select product.cat_id, product.prod_name, t2.* from product inner join
+(select prod_id, min(supp_price) as Min_price from supplier_pricing group by prod_id)
+as t2 where t2.prod_id = product.prod_id)
+as t3 where t3.cat_id = category.cat_id group by t3.cat_id;
+
+
+
+select product.prod_id, product.prod_name from `order` inner join supplier_pricing on
+supplier_pricing.pricing_id = `order`.pricing_id inner join product on
+product.prod_id = supplier_pricing.prod_id where `order`.ord_date>"2021-10-05";
+
+
+
+select report.supp_id, report.supp_name, report.Average,
+CASE
+WHEN report.Average=5 THEN 'Excellent Service'
+WHEN report.Average>4 THEN 'Good Service'
+WHEN report.Average>2 THEN 'Average Service'
+ELSE 'Poor Service'
+END AS Type_of_Service from 
+(select final.supp_id, supplier.supp_name, final.Average from
+(select test2.supp_id, sum(test2.rat_ratstars)/count(test2.rat_ratstars) as Average from
+(select supplier_pricing.supp_id, test.ORD_ID, test.RAT_RATSTARS from supplier_pricing inner join
+(select `order`.pricing_id, rating.ORD_ID, rating.RAT_RATSTARS from `order` inner join rating on rating.`ord_id` = `order`.ord_id) as test
+on test.pricing_id = supplier_pricing.pricing_id)
+as test2 group by supplier_pricing.supp_id)
+as final inner join supplier where final.supp_id = supplier.supp_id) as report;
+
+
+
+
+
